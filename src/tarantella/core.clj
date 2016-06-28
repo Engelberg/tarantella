@@ -53,11 +53,11 @@
                               (ex-info "Spec Failure" (s/explain-data spec data))))
       conform)))
 
-(s/def ::same-size-rows (fn [matrix] (= 1 (count (into #{} (map count) matrix)))))
+(defn- same-size-rows? [matrix] (= 1 (count (into #{} (map count) matrix))))
 (s/def ::matrix-row (s/and (s/coll-of (s/int-in 0 2) []) vector?))
 (s/def ::matrix (s/and (s/coll-of ::matrix-row [])
                        vector?
-                       ::same-size-rows))
+                       same-size-rows?))
 
 (s/def ::row-label ::s/any)
 (defn all-different? [coll] (or (set? coll) (apply distinct? coll)))
@@ -74,8 +74,9 @@
 (s/def ::ignore-columns ::column-labels)
 (s/def ::limit nat-int?)
 (s/def ::timeout pos-int?)
-(s/def ::dancing-links-options (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns
-                                                 ::limit ::timeout]))
+(s/def ::dancing-links-options 
+  (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout]))
+  ;(fn [m] (println m) (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
 
 (defn dancing-links
   "Can take input in one of three formats:
