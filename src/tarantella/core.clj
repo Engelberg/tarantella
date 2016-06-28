@@ -39,6 +39,20 @@
       (throw (ex-info "You preselected rows for the solution with duplicate column entries"
                       {:select-rows (:select-rows options)})))))
 
+;; Handy spec utilities
+(defn assert-valid [spec data]
+  (if (s/valid? spec data)
+    true
+    (throw (AssertionError. (s/explain-str spec data)
+                            (ex-info "Spec Failure" (s/explain-data spec data))))))
+
+(defn assert-conform [spec data]
+  (let [conform (s/conform spec data)]
+    (if (= conform ::s/invalid)
+      (throw (AssertionError. (s/explain-str spec data)
+                              (ex-info "Spec Failure" (s/explain-data spec data))))
+      conform)))
+
 (s/def ::same-size-rows (fn [matrix] (= 1 (count (into #{} (map count) matrix)))))
 (s/def ::matrix-row (s/and (s/coll-of (s/int-in 0 2) []) vector?))
 (s/def ::matrix (s/and (s/coll-of ::matrix-row [])
@@ -80,9 +94,7 @@ Optional keywords:
    :limit            - An integer, stop early as soon as you find this many solutions
    :timeout          - A number of milliseconds, stop early when this time has elapsed                       "
   [m & {:as options}]
-  (let [conform (s/conform ::dancing-links-input m),
-        _ (assert (not= conform ::s/invalid) (s/explain-str ::dancing-links-input m)),
-        [input-type _] conform
+  (let [[input-type _] (assert-conform ::dancing-links-input m),         
         ^DancingLink tapestry (make-tapestry
                                 ((case input-type
                                    ::matrix matrix->maps
