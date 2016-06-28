@@ -76,6 +76,7 @@
 (s/def ::timeout pos-int?)
 (s/def ::dancing-links-options (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns
                                                  ::limit ::timeout]))
+
 (defn dancing-links
   "Can take input in one of three formats:
    - A matrix (vector of equal-length vectors) of 1s and 0s
@@ -94,6 +95,8 @@ Optional keywords:
    :limit            - An integer, stop early as soon as you find this many solutions
    :timeout          - A number of milliseconds, stop early when this time has elapsed                       "
   [m & {:as options}]
+  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
+          "Invalid optional keyword")
   (let [[input-type _] (assert-conform ::dancing-links-input m),         
         ^DancingLink tapestry (make-tapestry
                                 ((case input-type
