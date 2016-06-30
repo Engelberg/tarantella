@@ -140,4 +140,4 @@ Optional keywords:
 (s/fdef dancing-links
         :args (s/cat :m ::dancing-links-input
                      :options ::dancing-links-options)
-        :ret ::row-labels)
+        :ret (s/coll-of ::row-labels))
