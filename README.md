@@ -10,6 +10,8 @@ So, I will complete the README and officially launch this library when clojure.s
 
 ## Usage
 
+[tarantella "1.0.0-SNAPSHOT"]
+
 ## Resources
 
 * [Wikipedia entry for Exact Cover problems](https://en.wikipedia.org/wiki/Exact_cover)
