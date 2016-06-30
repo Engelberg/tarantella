@@ -86,7 +86,7 @@
     ::matrix))
 
 (defmulti dancing-links-input-spec
-  "dancing-inks supports three input formats. See specs for:
+  "dancing-links supports three input formats. See specs for:
    :tarantella.core/matrix
    :tarantella.core/row-map
    :tarantella.core/row-seq"
