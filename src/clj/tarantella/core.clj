@@ -77,8 +77,8 @@
 (s/def ::limit pos-int?)
 (s/def ::timeout pos-int?)
 (s/def ::dancing-links-options
-  (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout]))
-;    (fn [m] (println m) (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
+  (s/& (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout])
+       (fn [m] (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
 
 (defn- row-type [row]
   (if (set? row) ::row-seq
@@ -118,8 +118,9 @@ Optional keywords:
    :limit            - A positive integer, stop early as soon as you find this many solutions
    :timeout          - A number of milliseconds, stop early when this time has elapsed"
   [m & {:as options}]
-  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
-          "Invalid optional keyword")
+; Style question: Should this assertion be here, or part of the spec?
+;  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
+;          "Invalid optional keyword")
   (let [input-type (dancing-links-input-type m)         
         ^DancingLink tapestry (make-tapestry
                                 ((case input-type
