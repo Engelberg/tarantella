@@ -1,4 +1,4 @@
-package dancinglinks;
+package io.github.engelberg.dancinglinks;
 import java.util.Map.Entry;
 import java.util.*;
 import java.lang.System;

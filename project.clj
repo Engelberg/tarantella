@@ -3,6 +3,8 @@
   :url "http://github.com/Engelberg/"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0-alpha7"]]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha8"]
+                 [better-cond "1.0.1"]]
   :jvm-opts ^:replace ["-Xmx1g" "-server"]
+  :source-paths ["src/clj"]
   :java-source-paths ["src/java"])

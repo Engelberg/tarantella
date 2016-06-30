@@ -1,7 +1,8 @@
 (ns tarantella.core
-  (:import dancinglinks.DancingLink)
+  (:import io.github.engelberg.dancinglinks.DancingLink)
   (:use clojure.set)
-  (:require [clojure.spec :as s]))
+  (:require [clojure.spec :as s]
+            [better-cond.core :as b]))
 
 (defn- row-map->col-map [m]
   (apply merge-with into (for [[k v] m, i v] {i [k]})))
@@ -54,30 +55,51 @@
       conform)))
 
 (defn- same-size-rows? [matrix] (= 1 (count (into #{} (map count) matrix))))
-(s/def ::matrix-row (s/and (s/coll-of (s/int-in 0 2) []) vector?))
-(s/def ::matrix (s/and (s/coll-of ::matrix-row [])
-                       vector?
+(s/def ::matrix (s/and (s/coll-of (s/coll-of (s/int-in 0 2) :kind vector?) 
+                                  :kind vector?)
                        same-size-rows?))
 
-(s/def ::row-label ::s/any)
-(defn all-different? [coll] (or (set? coll) (apply distinct? coll)))
-(s/def ::row-labels (s/and coll? all-different?))
-(s/def ::column-labels (s/and coll? all-different?))
-(s/def ::row-map (s/map-of ::row-label ::column-labels))
+(defn- all-different? [x] (or (set? x) (apply distinct? x)))
 
-(s/def ::row-seq (s/and (s/coll-of ::column-labels []) sequential?))
+(s/def ::row-label ::s/any)
+(s/def ::row-labels all-different?)
+(s/def ::column-label ::s/any)
+(s/def ::column-labels all-different?)
+
+(s/def ::row-map (s/map-of ::row-label ::column-labels))
+(s/def ::row-seq (s/coll-of ::column-labels :kind sequential? :into []))
 
 (s/def ::dancing-links-input (s/or ::matrix ::matrix ::row-map ::row-map ::row-seq ::row-seq))
 
 (s/def ::optional-columns ::column-labels)
 (s/def ::select-rows ::row-labels)
 (s/def ::ignore-columns ::column-labels)
-(s/def ::limit nat-int?)
+(s/def ::limit pos-int?)
 (s/def ::timeout pos-int?)
-(s/def ::dancing-links-options 
+(s/def ::dancing-links-options
   (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout]))
-  ;(fn [m] (println m) (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
+;    (fn [m] (println m) (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
 
+(defn- row-type [row]
+  (if (set? row) ::row-seq
+    (loop [row (seq row), seen (transient #{})]
+      (b/cond
+        (not row) nil ; unsure of type
+        :let [item (first row)]
+        (not (number? item)) ::row-seq
+        (and (not (== item 0)) (not (== item 1))) ::row-seq
+        (seen item) ::matrix
+        :let [seen (conj! seen item)]
+        (recur (next row) seen)))))
+      
+(defn- dancing-links-input-type [m]
+  (b/cond
+    (map? m) ::row-map
+    :let [input-type (first (keep row-type m))]
+    input-type input-type
+    (throw (ex-info "Cannot determine dancing-links input type"
+                    {:input m}))))
+        
 (defn dancing-links
   "Can take input in one of three formats:
    - A matrix (vector of equal-length vectors) of 1s and 0s
@@ -93,12 +115,12 @@ Optional keywords:
    :ignore-columns   - A set of column labels you want to ignore
    :select-rows      - A set of rows that must be selected for the solution
 
-   :limit            - An integer, stop early as soon as you find this many solutions
-   :timeout          - A number of milliseconds, stop early when this time has elapsed                       "
+   :limit            - A positive integer, stop early as soon as you find this many solutions
+   :timeout          - A number of milliseconds, stop early when this time has elapsed"
   [m & {:as options}]
   (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
           "Invalid optional keyword")
-  (let [[input-type _] (assert-conform ::dancing-links-input m),         
+  (let [input-type (dancing-links-input-type m)         
         ^DancingLink tapestry (make-tapestry
                                 ((case input-type
                                    ::matrix matrix->maps
@@ -118,4 +140,3 @@ Optional keywords:
         :args (s/cat :m ::dancing-links-input
                      :options ::dancing-links-options)
         :ret ::row-labels)
-
