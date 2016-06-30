@@ -12,6 +12,8 @@ So, I will complete the README and officially launch this library when clojure.s
 
 [tarantella "1.0.0-SNAPSHOT"]
 
+The API exposes a single function, `tarantella.core/dancing-links` which can take exact cover problems in three different input formats.  See doc string for details.
+
 ## Resources
 
 * [Wikipedia entry for Exact Cover problems](https://en.wikipedia.org/wiki/Exact_cover)
