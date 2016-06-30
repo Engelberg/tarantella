@@ -42,6 +42,11 @@
                       {:select-rows (:select-rows options)})))))
 
 ;; Specs
+;;
+;; Most of these specs don't currently generate, but when instrumentation is
+;; enabled for dancing-links, these specs allow for comprehensive input checking
+;; and improved error messages for erroneous inputs.
+;; It is recommended that you turn on instrumentation if you are new to using this library.
 
 (defn- same-size-rows? [matrix] (= 1 (count (into #{} (map count) matrix))))
 (s/def ::matrix (s/and (s/coll-of (s/coll-of (s/int-in 0 2) :kind vector?) 
