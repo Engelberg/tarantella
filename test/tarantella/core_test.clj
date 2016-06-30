@@ -42,3 +42,12 @@
                      [1    0    0    1    0    0    0]
                      [0    1    0    0    0    0    1]
                      [0    0    0    1    1    0    1]])))))
+
+(deftest example-with-names
+  (is (= (set (map set [[:Alice :Charles] [:Bob :David]]))
+         (set (map set 
+                   (t/dancing-links
+                     {:Alice [:chocolate :strawberry]
+                      :Bob [:chocolate :vanilla]
+                      :Charles [:vanilla]
+                      :David [:strawberry]}))))))
