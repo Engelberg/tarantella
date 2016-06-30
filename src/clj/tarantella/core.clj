@@ -3,6 +3,8 @@
   (:require [clojure.spec :as s]
             [better-cond.core :as b]))
 
+;; Functions to convert high-level input into format required by Java implementation
+
 (defn- row-map->col-map [m]
   (apply merge-with into (for [[k v] m, i v] {i [k]})))
 
@@ -39,19 +41,7 @@
       (throw (ex-info "You selected rows for the solution with duplicate column entries"
                       {:select-rows (:select-rows options)})))))
 
-;; Handy spec utilities
-;(defn assert-valid [spec data]
-;  (if (s/valid? spec data)
-;    true
-;    (throw (AssertionError. (s/explain-str spec data)
-;                            (ex-info "Spec Failure" (s/explain-data spec data))))))
-;
-;(defn assert-conform [spec data]
-;  (let [conform (s/conform spec data)]
-;    (if (= conform ::s/invalid)
-;      (throw (AssertionError. (s/explain-str spec data)
-;                              (ex-info "Spec Failure" (s/explain-data spec data))))
-;      conform)))
+;; Specs
 
 (defn- same-size-rows? [matrix] (= 1 (count (into #{} (map count) matrix))))
 (s/def ::matrix (s/and (s/coll-of (s/coll-of (s/int-in 0 2) :kind vector?) 
@@ -67,17 +57,6 @@
 
 (s/def ::row-map (s/map-of ::row-label ::column-labels))
 (s/def ::row-seq (s/coll-of ::column-labels :kind sequential? :into []))
-
-(s/def ::dancing-links-input (s/or ::matrix ::matrix ::row-map ::row-map ::row-seq ::row-seq))
-
-(s/def ::optional-columns ::column-labels)
-(s/def ::select-rows ::row-labels)
-(s/def ::ignore-columns ::column-labels)
-(s/def ::limit pos-int?)
-(s/def ::timeout pos-int?)
-(s/def ::dancing-links-options
-  (s/& (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout])
-       (fn [m] (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
 
 (defn- row-type [row]
   (if (set? row) ::row-seq
@@ -105,6 +84,35 @@
     ;    (throw (ex-info "Cannot determine dancing-links input type"
     ;                    {:input m}))))
     ::matrix))
+
+(defmulti dancing-links-input-spec
+  "dancing-inks supports three input formats. See specs for:
+   :tarantella.core/matrix
+   :tarantella.core/row-map
+   :tarantella.core/row-seq"
+  dancing-links-input-type)
+(defmethod dancing-links-input-spec ::matrix [_] ::matrix)
+(defmethod dancing-links-input-spec ::row-map [_] ::row-map)
+(defmethod dancing-links-input-spec ::row-seq [_] ::row-seq)
+
+(s/def ::dancing-links-input (s/multi-spec dancing-links-input-spec ::input))
+
+(s/def ::optional-columns ::column-labels)
+(s/def ::select-rows ::row-labels)
+(s/def ::ignore-columns ::column-labels)
+(s/def ::limit pos-int?)
+(s/def ::timeout pos-int?)
+(s/def ::dancing-links-options
+  (s/& (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::limit ::timeout])
+       (fn [m] (every? #{:optional-columns :select-rows :ignore-columns :limit :timeout} (keys m)))))
+
+(s/fdef dancing-links
+        :args (s/cat :m ::dancing-links-input
+                     :options ::dancing-links-options)
+        :ret (s/coll-of ::row-labels))
+
+
+;; The API implementation
 
 (defn- row-col-maps [m]
   (let [input-type (dancing-links-input-type m)]
@@ -145,8 +153,3 @@ Optional keywords:
           :else (.initSearch tapestry)), 
         selected-rows (:select-rows options)]
     (into [] (comp (map #(concat selected-rows %)) (map vec)) solutions)))
-
-(s/fdef dancing-links
-        :args (s/cat :m ::dancing-links-input
-                     :options ::dancing-links-options)
-        :ret (s/coll-of ::row-labels))
