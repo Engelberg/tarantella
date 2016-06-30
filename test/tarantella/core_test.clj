@@ -27,9 +27,18 @@
          (vec (for [j (range width)]
                 (if (< (rand) prob-1) 1 0))))))
 
-(deftest coverings
+(deftest random-coverings
   (dotimes [i 100]
     (let [m (random-matrix 30 10 0.2)
           output (t/dancing-links m :limit 100 :timeout 3000)]    
       (is (valid-output? m output)))))
 
+(deftest classic-test-case
+  (is (= (map set [[0 3 4]])
+         (map set (t/dancing-links 
+                    [[0    0    1    0    1    1    0]
+                     [1    0    0    1    0    0    1]
+                     [0    1    1    0    0    1    0]
+                     [1    0    0    1    0    0    0]
+                     [0    1    0    0    0    0    1]
+                     [0    0    0    1    1    0    1]])))))
