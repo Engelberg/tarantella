@@ -37,22 +37,22 @@
                                 (set (:optional-columns options))
                                 (into set-columns
                                       (:ignore-columns options)))
-      (throw (ex-info "You preselected rows for the solution with duplicate column entries"
+      (throw (ex-info "You selected rows for the solution with duplicate column entries"
                       {:select-rows (:select-rows options)})))))
 
 ;; Handy spec utilities
-(defn assert-valid [spec data]
-  (if (s/valid? spec data)
-    true
-    (throw (AssertionError. (s/explain-str spec data)
-                            (ex-info "Spec Failure" (s/explain-data spec data))))))
-
-(defn assert-conform [spec data]
-  (let [conform (s/conform spec data)]
-    (if (= conform ::s/invalid)
-      (throw (AssertionError. (s/explain-str spec data)
-                              (ex-info "Spec Failure" (s/explain-data spec data))))
-      conform)))
+;(defn assert-valid [spec data]
+;  (if (s/valid? spec data)
+;    true
+;    (throw (AssertionError. (s/explain-str spec data)
+;                            (ex-info "Spec Failure" (s/explain-data spec data))))))
+;
+;(defn assert-conform [spec data]
+;  (let [conform (s/conform spec data)]
+;    (if (= conform ::s/invalid)
+;      (throw (AssertionError. (s/explain-str spec data)
+;                              (ex-info "Spec Failure" (s/explain-data spec data))))
+;      conform)))
 
 (defn- same-size-rows? [matrix] (= 1 (count (into #{} (map count) matrix))))
 (s/def ::matrix (s/and (s/coll-of (s/coll-of (s/int-in 0 2) :kind vector?) 
@@ -97,8 +97,15 @@
     (map? m) ::row-map
     :let [input-type (first (keep row-type m))]
     input-type input-type
-    (throw (ex-info "Cannot determine dancing-links input type"
-                    {:input m}))))
+    ;; Warning: if we reach this point, the input-type is ambiguous which means
+    ;; it is a vector of vectors with two or fewer 0's and 1's, no duplicates in a row,
+    ;; for example, [[0 1] [1 0] [0 1] [0 1]].
+    ;; This is a silly thing to use dancing-links on in either interpretation, 
+    ;; but in this ambiguous case, let's go ahead and interpret it as a matrix.
+    ;; Alternatively, we could:
+    ;    (throw (ex-info "Cannot determine dancing-links input type"
+    ;                    {:input m}))))
+    ::matrix))
         
 (defn dancing-links
   "Can take input in one of three formats:
