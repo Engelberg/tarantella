@@ -59,7 +59,7 @@
                                   :kind vector?)
                        same-size-rows?))
 
-(defn- all-different? [x] (or (set? x) (apply distinct? x)))
+(defn- all-different? [x] (or (set? x) (empty? x) (apply distinct? x)))
 
 (s/def ::row-label ::s/any)
 (s/def ::row-labels all-different?)
