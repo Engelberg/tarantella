@@ -1,13 +1,35 @@
 (ns tarantella.core-test
-  (:require 
-    clojure.test
-    [tarantella.core :as t]))
+  (:use clojure.test)
+  (:require [tarantella.core :as t]))
 
 ;; I use this library in my own work, but cannot open-source my tests.
 ;; I would welcome pull requests with tests and examples.
 
-;; This would also be a good exercise for someone who wants to learn test.check
-;; to generate random matrices of 0s and 1s and check that the output is a valid covering.
-;; Checking the output would be straightforward for matrix inputs, 
-;; just recover the original rows from the row numbers, then
-;; (apply map + list-of-rows) and check that it is all 1's.
+;; I would also welcome a test suite making use of either test.check or clojure.spec 
+;; In the meantime, I've provided some simple randomized testing below.
+
+(defn covers? 
+  "Tests that a covering produced by dancing-links in fact covers a given input"
+  [dancing-links-input covering]
+  (let [[row-map col-map] (#'t/row-col-maps dancing-links-input),
+        selected-rows (map row-map covering),
+        covered-columns (apply concat selected-rows)]
+    (= (count (distinct covered-columns)) (count col-map))))
+    
+(defn valid-output?
+  "Tests that all coverings produced by dancing-links cover the input"
+  [dancing-links-input dancing-links-output]
+  (every? (partial covers? dancing-links-input) 
+          dancing-links-output))
+
+(defn random-matrix [height width prob-1]
+  (vec (for [i (range height)]
+         (vec (for [j (range width)]
+                (if (< (rand) prob-1) 1 0))))))
+
+(deftest coverings
+  (dotimes [i 100]
+    (let [m (random-matrix 30 10 0.2)
+          output (t/dancing-links m :limit 100 :timeout 3000)]    
+      (is (valid-output? m output)))))
+

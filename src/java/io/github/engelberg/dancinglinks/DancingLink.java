@@ -27,6 +27,8 @@ public class DancingLink {
     }
 
     static void linkHorizontally(ArrayList<DancingLink> links) {
+    	if (links.size()==0)
+    		return;
         DancingLink firstLink = links.get(0);
         DancingLink lastLink = links.get(links.size()-1);
         lastLink.r = firstLink;

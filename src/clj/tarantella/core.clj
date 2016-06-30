@@ -1,13 +1,12 @@
 (ns tarantella.core
   (:import io.github.engelberg.dancinglinks.DancingLink)
-  (:use clojure.set)
   (:require [clojure.spec :as s]
             [better-cond.core :as b]))
 
 (defn- row-map->col-map [m]
   (apply merge-with into (for [[k v] m, i v] {i [k]})))
 
-(defn- matrix->maps [m]
+(defn- matrix->row-col-maps [m]
   (let [n-rows (count m),
         n-cols (count (m 0))
         row-map
@@ -22,11 +21,11 @@
                           row)]))]
     [row-map col-map]))
 
-(defn- map->maps [m]
+(defn- row-map->row-col-maps [m]
   [m (row-map->col-map m)])
 
-(defn- seq->maps [s]
-  (map->maps (into {} (map-indexed vector s))))
+(defn- row-seq->row-col-maps [s]
+  (row-map->row-col-maps (into {} (map-indexed vector s))))
 
 (defn- make-tapestry [[row-map col-map] options]
   (let [columns-intersected-by-selected-rows (mapcat row-map (:select-rows options)),
@@ -106,7 +105,15 @@
     ;    (throw (ex-info "Cannot determine dancing-links input type"
     ;                    {:input m}))))
     ::matrix))
-        
+
+(defn- row-col-maps [m]
+  (let [input-type (dancing-links-input-type m)]
+    ((case input-type
+       ::matrix matrix->row-col-maps
+       ::row-map row-map->row-col-maps
+       ::row-seq  row-seq->row-col-maps)
+      m)))
+
 (defn dancing-links
   "Can take input in one of three formats:
    - A matrix (vector of equal-length vectors) of 1s and 0s
@@ -128,13 +135,8 @@ Optional keywords:
 ; Style question: Should this assertion be here, or part of the spec?
 ;  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
 ;          "Invalid optional keyword")
-  (let [input-type (dancing-links-input-type m)         
-        ^DancingLink tapestry (make-tapestry
-                                ((case input-type
-                                   ::matrix matrix->maps
-                                   ::row-map map->maps
-                                   ::row-seq  seq->maps)
-                                  m)
+  (let [^DancingLink tapestry (make-tapestry
+                                (row-col-maps m)
                                 options),
         solutions
         (cond
