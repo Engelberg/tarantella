@@ -55,9 +55,9 @@
 
 (defn- all-different? [x] (or (set? x) (empty? x) (apply distinct? x)))
 
-(s/def ::row-label ::s/any)
+(s/def ::row-label any?)
 (s/def ::row-labels all-different?)
-(s/def ::column-label ::s/any)
+(s/def ::column-label any?)
 (s/def ::column-labels all-different?)
 
 (s/def ::row-map (s/map-of ::row-label ::column-labels))
