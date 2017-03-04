@@ -30,7 +30,7 @@
 (deftest random-coverings
   (dotimes [i 100]
     (let [m (random-matrix 30 10 0.2)
-          output (t/dancing-links m :limit 100 :timeout 3000)]    
+          output (t/dancing-links m :limit 100 :timeout 3000)]
       (is (valid-output? m output)))))
 
 (deftest classic-test-case

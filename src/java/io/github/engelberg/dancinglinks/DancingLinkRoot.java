@@ -10,6 +10,8 @@ import java.lang.System;
 public class DancingLinkRoot extends DancingLink {
     public ArrayList listSolutions;
     public ArrayList<DancingLink> sol;
+    public boolean timeoutFlag;
+    public boolean limitFlag;
     int limit;
     long timeout;
     
@@ -83,8 +85,10 @@ public class DancingLinkRoot extends DancingLink {
     boolean searchLimit() {
         if (this == this.r) {
             addSolution();
-            if (limit == listSolutions.size())
-            	return false;
+            if (limit == listSolutions.size()) {
+                limitFlag = true;
+                return false;
+            }
             else 
             	return true;
         }
@@ -122,12 +126,16 @@ public class DancingLinkRoot extends DancingLink {
     }
     // return false when we've hit our search limit or time runs out
     boolean searchLimitTimeout() {
-    	if (System.currentTimeMillis()>timeout)
-    		return false;    	
+    	if (System.currentTimeMillis()>timeout) {
+            timeoutFlag = true;
+            return false;
+        }
         if (this == this.r) {
             addSolution();
-            if (limit == listSolutions.size())
-            	return false;
+            if (limit == listSolutions.size()) {
+                limitFlag = true;
+                return false;
+            }
             else 
             	return true;
         }

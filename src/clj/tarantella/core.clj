@@ -125,7 +125,7 @@
        ::matrix matrix->row-col-maps
        ::row-map row-map->row-col-maps
        ::row-seq  row-seq->row-col-maps)
-      m)))
+     m)))
 
 (defn dancing-links
   "Can take input in one of three formats:
@@ -143,8 +143,11 @@ Optional keywords:
    :select-rows      - A set of rows that must be selected for the solution
 
    :limit            - A positive integer, stop early as soon as you find this many solutions
-   :timeout          - A number of milliseconds, stop early when this time has elapsed"
-  [m & {:as options}]
+   :timeout          - A number of milliseconds, stop early when this time has elapsed
+
+If :limit or :timeout is specified, metadata will be attached to the return vector of the form
+{:search-ended-due-to-limit true/false, :search-ended-due-to-timeout true/false}"
+  [m & {:keys [limit timeout] :as options}]
 ; Style question: Should this assertion be here, or part of the spec?
 ;  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
 ;          "Invalid optional keyword")
@@ -153,8 +156,12 @@ Optional keywords:
                                 options),
         solutions
         (cond
-          (:timeout options) (.initSearchLimitTimeout tapestry (:limit options 0) (:timeout options))
-          (:limit options) (.initSearchLimit tapestry (:limit options))
+          timeout (.initSearchLimitTimeout tapestry (:limit options 0) timeout)
+          limit (.initSearchLimit tapestry limit)
           :else (.initSearch tapestry)), 
-        selected-rows (:select-rows options)]
-    (into [] (comp (map #(concat selected-rows %)) (map vec)) solutions)))
+        selected-rows (:select-rows options),
+        vec-solutions (into [] (comp (map #(concat selected-rows %)) (map vec)) solutions)]
+    (if (or limit timeout)
+      (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
+                                :search-ended-due-to-timeout (.timeoutFlag tapestry)})
+      vec-solutions)))
