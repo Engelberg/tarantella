@@ -6,7 +6,9 @@ Tarantella is also an implementation of Knuth's Dancing Links algorithm, a brute
 
 Tarantella is feature complete, but I'm using this library as an opportunity to learn clojure.spec, which is still in alpha.
 
-So, I will complete the README and officially launch this library when clojure.spec has stabilized and Clojure 1.9 is released.  If you don't know what exact cover problems are, and why you'd want to use this algorithm to solve them, stay tuned...
+So, I will complete the README and officially launch this library when clojure.spec has stabilized.  If you don't know what exact cover problems are, and why you'd want to use this algorithm to solve them, stay tuned...
+
+In the meantime, you can learn about how tarantella works by watching my talk [Solving Problems Declaratively](https://youtu.be/TA9DBG8x-ys).
 
 ## Usage
 
