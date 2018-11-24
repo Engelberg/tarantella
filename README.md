@@ -10,7 +10,7 @@ So, I will complete the README and officially launch this library when clojure.s
 
 ## Usage
 
-[tarantella "1.0.0-SNAPSHOT"]
+[tarantella "1.0.1"]
 
 The API exposes a single function, `tarantella.core/dancing-links` which can take exact cover problems in three different input formats.  See doc string for details.
 

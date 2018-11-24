@@ -1,6 +1,6 @@
 (ns tarantella.core
   (:import io.github.engelberg.dancinglinks.DancingLink)
-  (:require [clojure.spec :as s]
+  (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]))
 
 ;; Functions to convert high-level input into format required by Java implementation
