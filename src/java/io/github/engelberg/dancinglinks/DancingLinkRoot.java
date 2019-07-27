@@ -11,10 +11,10 @@ public class DancingLinkRoot extends DancingLink {
     public ArrayList listSolutions;
     public ArrayList<DancingLink> sol;
     
-    public Stack<DancingLink> stack;
-    public final int IN = 0;
-    public final int NEXT = 1;
-    public final int OUT = 2;
+    public Stack<DancingLink> columnStack;
+    public final int CHOOSE_COLUMN = 0;
+    public final int NEXT_ROW = 1;
+    public final int BACKTRACK = 2;
     public int traversal = 0;
     
     public boolean timeoutFlag;
@@ -53,30 +53,17 @@ public class DancingLinkRoot extends DancingLink {
 
     public void initSearchOne () {
         sol = new ArrayList();
-	stack = new Stack();
+	columnStack = new Stack();
     }
 
     public ArrayList searchOne() {
+	// Converts search process into a state machine.
+	// columnStack stores a stack of columns chosen.
+	// sol tracks rows chosen, uses null to indicate
+	// choice of  "no row" for optional cols.
 	while (true) {
-	    /*
-	    System.out.println("Traversal:" + traversal);
-	    if (stack.size() > 0) {
-		System.out.println("Col:" + stack.peek().n);
-	    }
-	    else {
-		System.out.println("No col");
-	    }
-	    if (sol.size() == 0) {
-		System.out.println("No sol");
-	    }
-	    else if (sol.get(sol.size()-1) == null) {
-		System.out.println("No row");
-	    }
-	    else {
-		System.out.println("Row:" + sol.get(sol.size()-1).n);
-	    }
-	    */
-	    if (traversal == IN) {
+	    if (traversal == CHOOSE_COLUMN) {
+		// Check to see whether we have a solution		
 		if (this == this.r) {
 		    ArrayList solution = new ArrayList();
 		    for (DancingLink link : sol) {
@@ -84,61 +71,82 @@ public class DancingLinkRoot extends DancingLink {
 			    solution.add(link.n);
 			}
 		    }
-		    traversal = NEXT;
+		    traversal = NEXT_ROW;
 		    return solution;
 		}
+		// Choose a column to work on
 		DancingLink colHeader = this.chooseColumn();
 		colHeader.cover();
-		stack.push(colHeader);	    	    
+		columnStack.push(colHeader);
+		// Find first row associated with this column
 		DancingLink i = colHeader.d;
+		// Select this first row for our solution
 		if (i != colHeader) {
 		    for (DancingLink j = i.r; j != i; j=j.r) {
 			j.c.cover();
 		    }
 		    sol.add(i);
 		}
+		// If no first row was found, but it's an optional col
+		// we need to consider the "no row" possiblity
 		else if (colHeader.optional) {
 		    sol.add(null);
-		    traversal = IN;
-		}		
+		    traversal = CHOOSE_COLUMN;
+		}
+		// Otherwise, if no row was found, we should backtrack
 		else {
-		    traversal = OUT;
+		    traversal = BACKTRACK;
 		}	    
 	    }
-	    else if (traversal == NEXT) {
+	    else if (traversal == NEXT_ROW) {
+		// Have we found all solutions?
 		if (sol.size() < 1)
 		    return null;
+		// What's the row we were just working on?
 		DancingLink i = sol.get(sol.size()-1);
+		// Remove it from our solution
 		sol.remove(sol.size()-1);
+		// If we've just considered "no row" for optional column,
+		// we're ready to backtrack
 		if (i == null) {
-		    traversal = OUT;
+		    traversal = BACKTRACK;
 		}
 		else {
+		    // Undo work for row we just processed
 		    for (DancingLink j = i.l; j != i; j=j.l) {
 			j.c.uncover();
 		    }
+		    // Go to next row
 		    i = i.d;
-		    DancingLink colHeader = stack.peek();
+		    DancingLink colHeader = columnStack.peek();
+		    // Select next row for our solution
 		    if (i != colHeader) {
 			for (DancingLink j = i.r; j != i; j=j.r) {
 			    j.c.cover();
 			}
 			sol.add(i);
-			traversal = IN;
+			traversal = CHOOSE_COLUMN;
 		    }
+		    // If there is no next row, but it is an optional col,
+		    // we need to consider the "no row" possibility
 		    else if (colHeader.optional) {
 			sol.add(null);
-			traversal = IN;
+			traversal = CHOOSE_COLUMN;
 		    }
+		    // If there is no next row and it's not an optional col,
+		    // we're ready to backtrack
 		    else {
-			traversal = OUT;
+			traversal = BACKTRACK;
 		    }
 		}
 	    }
-	    else if (traversal == OUT) {
-		DancingLink colHeader = stack.pop();
+	    else if (traversal == BACKTRACK) {
+		// We've explored every row possiblity for this column
+		// so we backtrack to previous column, and start looking
+		// for next row associated with the previous column.
+		DancingLink colHeader = columnStack.pop();
 		colHeader.uncover();
-		traversal = NEXT;
+		traversal = NEXT_ROW;
 	    }
 	}
     }
