@@ -39,6 +39,19 @@
           output (t/dancing-links m :limit 100 :timeout 3000 :shuffle true)]
       (is (valid-output? m output)))))
 
+(deftest compare-strict-vs-lazy
+  (dotimes [i 100]
+    (let [m (random-matrix 30 10 0.2)
+          output1 (t/dancing-links m :limit 1000
+                                   :select-rows #{0}
+                                   :ignore-columns #{9}
+                                   :optional-columns #{3 7})
+          output2 (t/dancing-links-lazy m :limit 1000
+                                        :select-rows #{0}
+                                        :ignore-columns #{9}
+                                        :optional-columns #{3 7})]
+      (is (= output1 output2)))))
+
 (deftest classic-test-case
   (is (= (map set [[0 3 4]])
          (map set (t/dancing-links 

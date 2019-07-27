@@ -135,10 +135,10 @@
    - A map of the form {row-label set-of-column-labels, ...}
    - A sequential collection of the form [set-of-column-labels-for-row-0 ...]
 
-Returns a vector of all the solutions (each solution is a vector of row labels,
-where the rows are implicitly labeled 0,1,... if no labels are specified).
+  Returns a vector of all the solutions (each solution is a vector of row labels,
+  where the rows are implicitly labeled 0,1,... if no labels are specified).
 
-Optional keywords:
+  Optional keywords:
    :optional-columns - A set of column labels where *at most one* 1 can be in that column
                        (as opposed to *exactly one* 1 like the standard columns)
    :ignore-columns   - A set of column labels you want to ignore
@@ -148,15 +148,12 @@ Optional keywords:
    :limit            - A positive integer, stop early as soon as you find this many solutions
    :timeout          - A number of milliseconds, stop early when this time has elapsed
 
-If :limit or :timeout is specified, metadata will be attached to the return vector of the form
-{:search-ended-due-to-limit true/false, :search-ended-due-to-timeout true/false}"
+  If :limit or :timeout is specified, metadata will be attached to the return vector of the form
+  {:search-ended-due-to-limit true/false, :search-ended-due-to-timeout true/false}"
   [m & {:keys [limit timeout] :as options}]
-; Style question: Should this assertion be here, or part of the spec?
-;  (assert (every? #{:optional-columns :ignore-columns :select-rows :limit :timeout} (keys options))
-;          "Invalid optional keyword")
   (let [^DancingLink tapestry (make-tapestry
-                                (row-col-maps m)
-                                options),
+                               (row-col-maps m)
+                               options),
         solutions
         (cond
           timeout (.initSearchLimitTimeout tapestry (:limit options 0) timeout)
@@ -168,3 +165,34 @@ If :limit or :timeout is specified, metadata will be attached to the return vect
       (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
                                 :search-ended-due-to-timeout (.timeoutFlag tapestry)})
       vec-solutions)))
+
+(defn- lazy-search [^DancingLink tapestry selected-rows]
+  (let [lazy-search-step
+        (fn lazy-search-step []
+          (lazy-seq
+           (when-let [sol (.searchOne tapestry)]
+             (cons (vec (concat selected-rows sol)) (lazy-search-step)))))]
+    (lazy-search-step)))
+
+(defn dancing-links-lazy
+  "Can take input in one of three formats:
+   - A matrix (vector of equal-length vectors) of 1s and 0s
+   - A map of the form {row-label set-of-column-labels, ...}
+   - A sequential collection of the form [set-of-column-labels-for-row-0 ...]
+
+  Returns a vector of all the solutions (each solution is a vector of row labels,
+  where the rows are implicitly labeled 0,1,... if no labels are specified).
+
+  Optional keywords:
+   :optional-columns - A set of column labels where *at most one* 1 can be in that column
+                       (as opposed to *exactly one* 1 like the standard columns)
+   :ignore-columns   - A set of column labels you want to ignore
+   :select-rows      - A set of rows that must be selected for the solution
+   :shuffle          - Shuffle rows and cols for randomness in search among equally promising alternatives"
+  [m & {:keys [limit timeout] :as options}]
+  (let [^DancingLink tapestry (make-tapestry
+                               (row-col-maps m)
+                               options),
+        selected-rows (:select-rows options)]    
+    (.initSearchOne tapestry)
+    (lazy-search tapestry selected-rows)))
