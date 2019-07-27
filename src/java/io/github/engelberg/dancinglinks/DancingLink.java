@@ -80,16 +80,16 @@ public class DancingLink {
     }
     
     public static DancingLink makeTapestry(Map<Object,Collection> rowMap, Map<Object,Collection> colMap){
-        return makeTapestry(rowMap,colMap,new java.util.HashSet(), new java.util.HashSet());
+        return makeTapestry(rowMap,colMap,new java.util.HashSet(), new java.util.HashSet(), false);
     }
     
     public static DancingLink makeTapestry(Map<Object,Collection> rowMap, Map<Object,Collection> colMap,
     		Set<Object> optionalCols){
-    	return makeTapestry(rowMap,colMap,optionalCols, new java.util.HashSet());
+    	return makeTapestry(rowMap,colMap,optionalCols, new java.util.HashSet(), false);
     }
     
     public static DancingLinkRoot makeTapestry(Map<Object,Collection> rowMap, Map<Object,Collection> colMap,
-            Set<Object> optionalCols, Set<Object> coveredCols){
+            Set<Object> optionalCols, Set<Object> coveredCols, boolean shuffle){
         Object[] rh = makeColumnHeaders(colMap, optionalCols, coveredCols);
         DancingLinkRoot root = (DancingLinkRoot) rh[0];
         Map<Object,DancingLink> headers = (Map<Object,DancingLink>) rh[1];
@@ -102,13 +102,32 @@ public class DancingLink {
                 m.put(col, new DancingLink(row));
             }
         }
-        for (Iterator<Entry<Object, Collection>> it = colMap.entrySet().iterator(); it.hasNext();) {
-            java.util.Map.Entry cr = it.next();
+	Iterator<Entry<Object, Collection>> columnIterator;
+	if (shuffle) {
+	    List<Map.Entry<Object, Collection>> shuffledColMapEntries = new ArrayList<> (colMap.entrySet());
+	    Collections.shuffle(shuffledColMapEntries);
+	    columnIterator = shuffledColMapEntries.iterator();
+	}
+	else {
+	    columnIterator = colMap.entrySet().iterator();
+	}
+        for (Iterator<Entry<Object, Collection>> colIt = columnIterator; colIt.hasNext();) {
+            java.util.Map.Entry cr = colIt.next();
             Object col = cr.getKey();
             Collection rows = (Collection) cr.getValue();
+	    Iterator<Object> rowIterator;
+	    if (shuffle) {
+		List shuffledRows = new ArrayList<> (rows);
+		Collections.shuffle(shuffledRows);
+		rowIterator = shuffledRows.iterator();
+	    }
+	    else {
+		rowIterator = rows.iterator();
+	    }
             ArrayList colLinks = new ArrayList();
             colLinks.add(headers.get(col));
-            for (Object row : rows) {
+            for (Iterator<Object> rowIt = rowIterator; rowIt.hasNext();) {
+		Object row = rowIt.next();
                 colLinks.add(links.get(row).get(col));
             }
             linkVertically(colLinks);
@@ -129,6 +148,7 @@ public class DancingLink {
         return root;
     }
 
+    
     // Call on column header
     void cover() {
         this.r.l = this.l;

@@ -10,6 +10,7 @@ import java.lang.System;
 public class DancingLinkRoot extends DancingLink {
     public ArrayList listSolutions;
     public ArrayList<DancingLink> sol;
+    public Stack<DancingLink> stack;
     public boolean timeoutFlag;
     public boolean limitFlag;
     int limit;
