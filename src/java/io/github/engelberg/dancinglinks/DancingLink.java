@@ -21,7 +21,12 @@ public class DancingLink {
     }
 
     public DancingLink(int s, Object n, boolean optional) {
-        this.s = s;
+	// Optional columns have one more choice, i.e.,
+	// choice to not cover column at all, so we add 1 to s
+	if (optional)
+	    this.s = s + 1;
+	else
+	    this.s = s;
         this.n = n;
         this.optional = optional;
     }

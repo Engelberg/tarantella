@@ -19,7 +19,7 @@ public class DancingLinkRoot extends DancingLink {
         super(n);
     }
     
-	DancingLink chooseColumn(){
+    DancingLink chooseColumn(){
         int bestSize = this.r.s;
         DancingLink bestLink = this.r;
         for (DancingLink link = this.r.r; link != this; link = link.r) {
