@@ -1,7 +1,8 @@
 (ns tarantella.core
   (:import io.github.engelberg.dancinglinks.DancingLink)
+  (:refer-clojure :exclude [cond])
   (:require [clojure.spec.alpha :as s]
-            [better-cond.core :as b]))
+            [better-cond.core :refer [cond defnc defnc-]]))
 
 ;; Functions to convert high-level input into format required by Java implementation
 
@@ -66,18 +67,18 @@
 
 (defn- row-type [row]
   (if (set? row) ::row-seq
-    (loop [row (seq row), seen (transient #{})]
-      (b/cond
-        (not row) nil ; unsure of type
-        :let [item (first row)]
-        (not (number? item)) ::row-seq
-        (and (not (== item 0)) (not (== item 1))) ::row-seq
-        (seen item) ::matrix
-        :let [seen (conj! seen item)]
-        (recur (next row) seen)))))
-      
+      (loop [row (seq row), seen (transient #{})]
+        (cond
+          (not row) nil ; unsure of type
+          :let [item (first row)]
+          (not (number? item)) ::row-seq
+          (and (not (== item 0)) (not (== item 1))) ::row-seq
+          (seen item) ::matrix
+          :let [seen (conj! seen item)]
+          (recur (next row) seen)))))
+
 (defn- dancing-links-input-type [m]
-  (b/cond
+  (cond
     (map? m) ::row-map
     :let [input-type (first (keep row-type m))]
     input-type input-type
@@ -87,8 +88,8 @@
     ;; This is a silly thing to use dancing-links on in either interpretation, 
     ;; but in this ambiguous case, let's go ahead and interpret it as a matrix.
     ;; Alternatively, we could:
-    ;    (throw (ex-info "Cannot determine dancing-links input type"
-    ;                    {:input m}))))
+                                        ;    (throw (ex-info "Cannot determine dancing-links input type"
+                                        ;                    {:input m}))))
     ::matrix))
 
 (defmulti dancing-links-input-spec
@@ -114,9 +115,9 @@
        (fn [m] (every? #{:optional-columns :select-rows :ignore-columns :shuffle :limit :timeout} (keys m)))))
 
 (s/fdef dancing-links
-        :args (s/cat :m ::dancing-links-input
-                     :options ::dancing-links-options)
-        :ret (s/coll-of ::row-labels))
+  :args (s/cat :m ::dancing-links-input
+               :options ::dancing-links-options)
+  :ret (s/coll-of ::row-labels))
 
 
 ;; The API implementation
@@ -129,7 +130,15 @@
        ::row-seq  row-seq->row-col-maps)
      m)))
 
-(defn dancing-links
+(defn- lazy-search [^DancingLink tapestry selected-rows]
+  (let [lazy-search-step
+        (fn lazy-search-step []
+          (lazy-seq
+           (when-let [sol (.searchOne tapestry)]
+             (cons (vec (concat selected-rows sol)) (lazy-search-step)))))]
+    (lazy-search-step)))
+
+(defnc dancing-links
   "Can take input in one of three formats:
    - A matrix (vector of equal-length vectors) of 1s and 0s
    - A map of the form {row-label set-of-column-labels, ...}
@@ -145,54 +154,26 @@
    :select-rows      - A set of rows that must be selected for the solution
    :shuffle          - Shuffle rows and cols for randomness in search among equally promising alternatives
 
+   :lazy             - Boolean. Return a lazy sequence
+
    :limit            - A positive integer, stop early as soon as you find this many solutions
    :timeout          - A number of milliseconds, stop early when this time has elapsed
 
+  :limit and :timeout are ignored if you have selected `:lazy true`.
   If :limit or :timeout is specified, metadata will be attached to the return vector of the form
   {:search-ended-due-to-limit true/false, :search-ended-due-to-timeout true/false}"
-  [m & {:keys [limit timeout] :as options}]
-  (let [^DancingLink tapestry (make-tapestry
+  [m & {:keys [limit timeout lazy select-rows] :as options}]
+  :let [^DancingLink tapestry (make-tapestry
                                (row-col-maps m)
-                               options),
-        solutions
+                               options)]
+  lazy (do (.initSearchOne tapestry) (lazy-search tapestry select-rows)),
+  :let [solutions
         (cond
           timeout (.initSearchLimitTimeout tapestry (:limit options 0) timeout)
           limit (.initSearchLimit tapestry limit)
           :else (.initSearch tapestry)), 
-        selected-rows (:select-rows options),
-        vec-solutions (into [] (comp (map #(concat selected-rows %)) (map vec)) solutions)]
-    (if (or limit timeout)
-      (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
-                                :search-ended-due-to-timeout (.timeoutFlag tapestry)})
-      vec-solutions)))
-
-(defn- lazy-search [^DancingLink tapestry selected-rows]
-  (let [lazy-search-step
-        (fn lazy-search-step []
-          (lazy-seq
-           (when-let [sol (.searchOne tapestry)]
-             (cons (vec (concat selected-rows sol)) (lazy-search-step)))))]
-    (lazy-search-step)))
-
-(defn dancing-links-lazy
-  "Can take input in one of three formats:
-   - A matrix (vector of equal-length vectors) of 1s and 0s
-   - A map of the form {row-label set-of-column-labels, ...}
-   - A sequential collection of the form [set-of-column-labels-for-row-0 ...]
-
-  Returns a vector of all the solutions (each solution is a vector of row labels,
-  where the rows are implicitly labeled 0,1,... if no labels are specified).
-
-  Optional keywords:
-   :optional-columns - A set of column labels where *at most one* 1 can be in that column
-                       (as opposed to *exactly one* 1 like the standard columns)
-   :ignore-columns   - A set of column labels you want to ignore
-   :select-rows      - A set of rows that must be selected for the solution
-   :shuffle          - Shuffle rows and cols for randomness in search among equally promising alternatives"
-  [m & {:keys [limit timeout] :as options}]
-  (let [^DancingLink tapestry (make-tapestry
-                               (row-col-maps m)
-                               options),
-        selected-rows (:select-rows options)]    
-    (.initSearchOne tapestry)
-    (lazy-search tapestry selected-rows)))
+        vec-solutions (into [] (comp (map #(concat select-rows %)) (map vec)) solutions)]
+  (or limit timeout)
+  (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
+                            :search-ended-due-to-timeout (.timeoutFlag tapestry)}),
+  :else vec-solutions)

@@ -46,27 +46,69 @@
                                    :select-rows #{0}
                                    :ignore-columns #{9}
                                    :optional-columns #{3 7})
-          output2 (t/dancing-links-lazy m :limit 1000
-                                        :select-rows #{0}
-                                        :ignore-columns #{9}
-                                        :optional-columns #{3 7})]
+          output2 (t/dancing-links m :lazy true
+                                   :limit 1000
+                                   :select-rows #{0}
+                                   :ignore-columns #{9}
+                                   :optional-columns #{3 7})]
       (is (= output1 output2)))))
 
 (deftest classic-test-case
   (is (= (map set [[0 3 4]])
          (map set (t/dancing-links 
-                    [[0    0    1    0    1    1    0]
-                     [1    0    0    1    0    0    1]
-                     [0    1    1    0    0    1    0]
-                     [1    0    0    1    0    0    0]
-                     [0    1    0    0    0    0    1]
-                     [0    0    0    1    1    0    1]])))))
+                   [[0    0    1    0    1    1    0]
+                    [1    0    0    1    0    0    1]
+                    [0    1    1    0    0    1    0]
+                    [1    0    0    1    0    0    0]
+                    [0    1    0    0    0    0    1]
+                    [0    0    0    1    1    0    1]]))))
+  (is (= (map set [[0 3 4]])
+         (map set (t/dancing-links 
+                   [[0    0    1    0    1    1    0]
+                    [1    0    0    1    0    0    1]
+                    [0    1    1    0    0    1    0]
+                    [1    0    0    1    0    0    0]
+                    [0    1    0    0    0    0    1]
+                    [0    0    0    1    1    0    1]]
+                   :select-rows #{0}))))
+  (is (= []
+         (t/dancing-links 
+          [[0    0    1    0    1    1    0]
+           [1    0    0    1    0    0    1]
+           [0    1    1    0    0    1    0]
+           [1    0    0    1    0    0    0]
+           [0    1    0    0    0    0    1]
+           [0    0    0    1    1    0    1]]
+          :select-rows #{1}))))
+
+
+(deftest optional-columns
+  (is (= (set (map set [[0 3 4] [0 1]]))
+         (set (map set (t/dancing-links 
+                        [[0    0    1    0    1    1    0]
+                         [1    0    0    1    0    0    1]
+                         [0    1    1    0    0    1    0]
+                         [1    0    0    1    0    0    0]
+                         [0    1    0    0    0    0    1]
+                         [0    0    0    1    1    0    1]]
+                        :optional-columns #{1}))))))
+
+(deftest ignore-columns
+  (is (= (set (map set [[0 1]]))
+         (set (map set (t/dancing-links 
+                        [[0    0    1    0    1    1    0]
+                         [1    0    0    1    0    0    1]
+                         [0    1    1    0    0    1    0]
+                         [1    0    0    1    0    0    0]
+                         [0    1    0    0    0    0    1]
+                         [0    0    0    1    1    0    1]]
+                        :ignore-columns #{1}))))))
 
 (deftest example-with-names
   (is (= (set (map set [[:Alice :Charles] [:Bob :David]]))
          (set (map set 
                    (t/dancing-links
-                     {:Alice [:chocolate :strawberry]
-                      :Bob [:chocolate :vanilla]
-                      :Charles [:vanilla]
-                      :David [:strawberry]}))))))
+                    {:Alice [:chocolate :strawberry]
+                     :Bob [:chocolate :vanilla]
+                     :Charles [:vanilla]
+                     :David [:strawberry]}))))))
