@@ -62,7 +62,8 @@ public class DancingLinkRoot extends DancingLink {
         for (DancingLink link : sol) {
             solution.add(link.n);
         }
-        listSolutions.add(solution);
+	SolutionWithStats solWithStats = new SolutionWithStats(solution, nodes, decisionNodes, deadends);
+        listSolutions.add(solWithStats);
     }
 
     public void initSearchOne () {

@@ -1,5 +1,6 @@
 (ns tarantella.core
-  (:import io.github.engelberg.dancinglinks.DancingLink)
+  (:import io.github.engelberg.dancinglinks.DancingLink
+           io.github.engelberg.dancinglinks.SolutionWithStats)
   (:refer-clojure :exclude [cond])
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :refer [cond defnc defnc-]]))
@@ -177,8 +178,13 @@
         (cond
           timeout (.initSearchLimitTimeout tapestry (:limit options 0) timeout)
           limit (.initSearchLimit tapestry limit)
-          :else (.initSearch tapestry)), 
-        vec-solutions (into [] (comp (map #(concat select-rows %)) (map vec)) solutions)]
+          :else (.initSearch tapestry)),
+        add-meta (fn [^SolutionWithStats sol]
+                   (with-meta (vec (concat select-rows (.-solution sol)))
+                     {:nodes (.-nodes sol),
+                      :decision-nodes (.-decisionNodes sol),
+                      :dead-ends (.-deadends sol)}))
+        vec-solutions (into [] (map add-meta) solutions)]
   (or limit timeout)
   (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
                             :search-ended-due-to-timeout (.timeoutFlag tapestry)
