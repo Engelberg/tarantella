@@ -97,10 +97,8 @@
              (filled-cells->board clues)))))
 
 (defn measure-hardness [puzzle]
-  (->> (t/dancing-links sudoku-constraints
-                        :select-rows (board->filled-cells puzzle)
-                        :lazy true)
-       first meta))
+  (meta (t/dancing-links sudoku-constraints
+                        :select-rows (board->filled-cells puzzle))))
 
 (defn make-hard-sudokus []
   (filter (fn [puzzle] (pos? (:decision-nodes (measure-hardness puzzle))))
