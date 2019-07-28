@@ -157,7 +157,7 @@
    :optional-columns - A set of column labels where *at most one* 1 can be in that column
                        (as opposed to *exactly one* 1 like the standard columns)
    :ignore-columns   - A set of column labels you want to ignore
-   :select-rows      - A set of rows that must be selected for the solution
+   :select-rows      - A set of row labels that must be selected for the solution
    :shuffle          - Boolean. Randomize search among equally promising alternatives
 
    :lazy             - Boolean. Return a lazy sequence
