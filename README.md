@@ -347,10 +347,61 @@ Most randomly generated Sudoku puzzles have no decisions to be made, and no dead
 
 => (def h (make-hard-sudokus))
 => (take 5 h)   ;; This will take a while
-
+([[- - - - - - 8 - -]
+  [- - - 2 3 - - 6 5]
+  [- 6 - - - - - 2 -]
+  [- - - - 8 4 - - -]
+  [- 3 - - 5 - - 8 -]
+  [- - - 7 9 - 1 3 -]
+  [6 - - - - 8 9 - -]
+  [- 7 3 - - 5 2 - -]
+  [8 - 9 - - - - - 7]]
+ [[- - 3 - - 5 - 8 -]
+  [- - 2 1 3 4 9 - 5]
+  [9 - - 8 6 - 1 - -]
+  [- - 8 - - - - - -]
+  [- - 6 5 8 - - 2 7]
+  [- 9 - 2 - 6 - - 1]
+  [8 3 - - - - 6 5 -]
+  [2 - - 6 - - - - -]
+  [- 6 - - 4 - - - 8]]
+ [[6 - - - 3 - 4 1 -]
+  [- 2 3 - 1 5 6 - 8]
+  [- 1 8 4 - - - - 5]
+  [- - - 9 - - - - -]
+  [8 - - - 6 - 1 - -]
+  [1 4 - - - - - 6 2]
+  [2 - - 6 - - 9 - -]
+  [- - - - - - - 5 6]
+  [- 5 - - - - 8 - 1]]
+ [[- 6 - 3 - 5 - - 7]
+  [- 1 - 9 6 - 2 - -]
+  [- - 3 - - 7 - 6 9]
+  [6 - - 7 - 1 - 2 5]
+  [- 2 5 - 9 - - - 6]
+  [1 3 - 2 5 6 - - 4]
+  [- 8 - - 1 - - - -]
+  [9 7 - - - - - - -]
+  [- 5 - 4 - - 6 9 -]]
+ [[- 7 - - - 5 - 6 2]
+  [5 - - - - - 4 - 3]
+  [- - 3 - 2 - - 9 7]
+  [- - - 8 - 4 - - 9]
+  [- 5 - 2 9 7 - - 8]
+  [7 - - - - 1 2 - 4]
+  [- 6 - - - - - - -]
+  [- - 4 - - 2 8 - -]
+  [2 - - 5 - 3 - - -]])
+  
+=> (map measure-hardness *1)
+({:nodes 137, :decision-nodes 7, :dead-ends 7}
+ {:nodes 73, :decision-nodes 2, :dead-ends 2}
+ {:nodes 67, :decision-nodes 1, :dead-ends 1}
+ {:nodes 54, :decision-nodes 1, :dead-ends 1}
+ {:nodes 92, :decision-nodes 2, :dead-ends 2})
 ```
 
-So there you have it: five fresh, challenging Sudokus. Enjoy!
+So there you have it: five fresh, challenging Sudokus and the ability to create as many more as you'd like. Enjoy!
 
 ## Resources
 
