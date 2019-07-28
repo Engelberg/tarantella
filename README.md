@@ -147,6 +147,12 @@ There are a few keyword arguments that can alter the search in useful ways. Here
 
 ## Metadata
 
+## Why should I care?
+
+## Sudoku solver
+
+## Sudoku generator
+
 
 
 
