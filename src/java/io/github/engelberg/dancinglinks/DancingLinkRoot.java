@@ -8,15 +8,25 @@ import java.lang.System;
  * @author Mark Engelberg
  */
 public class DancingLinkRoot extends DancingLink {
+    // Statistics
+    public long steps = 0;
+    public long backtrackSteps = 0;
+    public long nodes = 0;
+    public long decisionNodes = 0;
+    public long deadends = 0;
+
+    // Solutions
     public ArrayList listSolutions;
     public Stack<DancingLink> sol;
-    
+
+    // State machine
     public Stack<DancingLink> columnStack;
     public final int CHOOSE_COLUMN = 0;
     public final int NEXT_ROW = 1;
     public final int BACKTRACK = 2;
     public int traversal = 0;
-    
+
+    // Termination criteria
     public boolean timeoutFlag;
     public boolean limitFlag;
     int limit;
@@ -35,6 +45,10 @@ public class DancingLinkRoot extends DancingLink {
                 bestLink = link;
             }
         }
+	if (bestSize > 1)
+	    decisionNodes++;
+	else if (bestSize == 0)
+	    deadends++;
         return bestLink;
     }
 
@@ -54,6 +68,7 @@ public class DancingLinkRoot extends DancingLink {
     public void initSearchOne () {
         sol = new Stack();
 	columnStack = new Stack();
+	nodes = 1;  // Count root node
     }
 
     public ArrayList searchOne() {
@@ -62,6 +77,7 @@ public class DancingLinkRoot extends DancingLink {
 	// sol tracks rows chosen, uses null to indicate
 	// choice of  "no row" for optional cols.
 	while (true) {
+	    steps++;
 	    if (traversal == CHOOSE_COLUMN) {
 		// Check to see whether we have a solution		
 		if (this == this.r) {
@@ -86,11 +102,13 @@ public class DancingLinkRoot extends DancingLink {
 			j.c.cover();
 		    }
 		    sol.push(i);
+		    nodes++;
 		}
 		// If no first row was found, but it's an optional col
 		// we need to consider the "no row" possiblity
 		else if (colHeader.optional) {
 		    sol.push(null);
+		    nodes++;
 		    traversal = CHOOSE_COLUMN;
 		}
 		// Otherwise, if no row was found, we should backtrack
@@ -123,12 +141,14 @@ public class DancingLinkRoot extends DancingLink {
 			    j.c.cover();
 			}
 			sol.push(i);
+			nodes++;
 			traversal = CHOOSE_COLUMN;
 		    }
 		    // If there is no next row, but it is an optional col,
 		    // we need to consider the "no row" possibility
 		    else if (colHeader.optional) {
 			sol.push(null);
+			nodes++;
 			traversal = CHOOSE_COLUMN;
 		    }
 		    // If there is no next row and it's not an optional col,
@@ -142,6 +162,7 @@ public class DancingLinkRoot extends DancingLink {
 		// We've explored every row possiblity for this column
 		// so we backtrack to previous column, and start looking
 		// for next row associated with the previous column.
+		backtrackSteps++;
 		DancingLink colHeader = columnStack.pop();
 		colHeader.uncover();
 		traversal = NEXT_ROW;
@@ -156,6 +177,7 @@ public class DancingLinkRoot extends DancingLink {
     }
 
     void search() {
+	nodes++;
         if (this == this.r) {
             addSolution();
         }
@@ -188,6 +210,7 @@ public class DancingLinkRoot extends DancingLink {
     }
     // return false when we've hit our search limit
     boolean searchLimit() {
+	nodes++;
         if (this == this.r) {
             addSolution();
             if (limit == listSolutions.size()) {
@@ -231,6 +254,7 @@ public class DancingLinkRoot extends DancingLink {
     }
     // return false when we've hit our search limit or time runs out
     boolean searchLimitTimeout() {
+	nodes++;
     	if (System.currentTimeMillis()>timeout) {
             timeoutFlag = true;
             return false;

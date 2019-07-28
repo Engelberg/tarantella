@@ -135,7 +135,13 @@
         (fn lazy-search-step []
           (lazy-seq
            (when-let [sol (.searchOne tapestry)]
-             (cons (vec (concat selected-rows sol)) (lazy-search-step)))))]
+             (cons (with-meta (vec (concat selected-rows sol))
+                     {:steps (.-steps tapestry),
+                      :backtrack-steps (.-backtrackSteps tapestry),
+                      :nodes (.-nodes tapestry)
+                      :decision-nodes (.-decisionNodes tapestry),
+                      :dead-ends (.-deadends tapestry)})
+                   (lazy-search-step)))))]
     (lazy-search-step)))
 
 (defnc dancing-links
@@ -152,7 +158,7 @@
                        (as opposed to *exactly one* 1 like the standard columns)
    :ignore-columns   - A set of column labels you want to ignore
    :select-rows      - A set of rows that must be selected for the solution
-   :shuffle          - Shuffle rows and cols for randomness in search among equally promising alternatives
+   :shuffle          - Boolean. Randomize search among equally promising alternatives
 
    :lazy             - Boolean. Return a lazy sequence
 
@@ -175,5 +181,10 @@
         vec-solutions (into [] (comp (map #(concat select-rows %)) (map vec)) solutions)]
   (or limit timeout)
   (with-meta vec-solutions {:search-ended-due-to-limit (.limitFlag tapestry),
-                            :search-ended-due-to-timeout (.timeoutFlag tapestry)}),
-  :else vec-solutions)
+                            :search-ended-due-to-timeout (.timeoutFlag tapestry)
+                            :nodes (.-nodes tapestry),
+                            :decision-nodes (.-decisionNodes tapestry)
+                            :dead-ends (.-deadends tapestry)}),
+  :else (with-meta vec-solutions {:nodes (.-nodes tapestry),
+                                  :decision-nodes (.-decisionNodes tapestry)
+                                  :dead-ends (.-deadends tapestry)}))

@@ -12,7 +12,7 @@ In the meantime, you can learn about how tarantella works by watching my talk [S
 
 ## Usage
 
-[tarantella "1.0.1"]
+[tarantella "1.1.0"]
 
 The API exposes a single function, `tarantella.core/dancing-links` which can take exact cover problems in three different input formats.  See doc string for details.
 
