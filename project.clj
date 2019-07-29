@@ -1,4 +1,4 @@
-(defproject tarantella "1.1.0"
+(defproject tarantella "1.1.1"
   :description "A Clojure implementation of Knuth's Dancing Links algorithm"
   :url "http://github.com/Engelberg/"
   :license {:name "Eclipse Public License"

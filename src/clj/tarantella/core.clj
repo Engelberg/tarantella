@@ -38,7 +38,7 @@
       (DancingLink/makeTapestry row-map col-map
                                 (set (:optional-columns options))
                                 (into set-columns
-                                      (:ignore-columns options))
+                                      (:forbid-columns options))
                                 (boolean (:shuffle options)))
       (throw (ex-info "You selected rows for the solution with duplicate column entries"
                       {:select-rows (:select-rows options)})))))
@@ -106,13 +106,13 @@
 
 (s/def ::optional-columns ::column-labels)
 (s/def ::select-rows ::row-labels)
-(s/def ::ignore-columns ::column-labels)
+(s/def ::forbid-columns ::column-labels)
 (s/def ::shuffle boolean?)
 (s/def ::limit pos-int?)
 (s/def ::timeout pos-int?)
 (s/def ::dancing-links-options
-  (s/& (s/keys* :opt-un [::optional-columns ::select-rows ::ignore-columns ::shuffle ::limit ::timeout])
-       (fn [m] (every? #{:optional-columns :select-rows :ignore-columns :shuffle :limit :timeout} (keys m)))))
+  (s/& (s/keys* :opt-un [::optional-columns ::select-rows ::forbid-columns ::shuffle ::limit ::timeout])
+       (fn [m] (every? #{:optional-columns :select-rows :forbid-columns :shuffle :limit :timeout} (keys m)))))
 
 (s/fdef dancing-links
   :args (s/cat :m ::dancing-links-input
@@ -156,7 +156,8 @@
   Optional keywords:
    :optional-columns - A set of column labels where *at most one* 1 can be in that column
                        (as opposed to *exactly one* 1 like the standard columns)
-   :ignore-columns   - A set of column labels you want to ignore
+   :forbid-columns   - A set of column labels where *no* 1 can be in that column
+                       (as opposed to *exactly one* 1 like the standard columns)
    :select-rows      - A set of row labels that must be selected for the solution
    :shuffle          - Boolean. Randomize search among equally promising alternatives
 

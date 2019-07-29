@@ -8,7 +8,7 @@ You can learn about how tarantella works by watching my talk [Solving Problems D
 
 ## Usage
 
-[tarantella "1.1.0"]
+[tarantella "1.1.1"]
 
 The API exposes a single function, `tarantella.core/dancing-links` which can take exact cover problems in three different input formats.  Here is the doc string:
 
@@ -24,7 +24,8 @@ Can take input in one of three formats:
   Optional keywords:
    :optional-columns - A set of column labels where *at most one* 1 can be in that column
                        (as opposed to *exactly one* 1 like the standard columns)
-   :ignore-columns   - A set of column labels you want to ignore
+   :forbid-columns   - A set of column labels where *no* 1 can be in that column
+                       (as opposed to *exactly one* 1 like the standard columns)
    :select-rows      - A set of row labels that must be selected for the solution
    :shuffle          - Boolean. Randomize search among equally promising alternatives
 
@@ -63,6 +64,12 @@ We can run `dancing-links` on it to find a list of all possible coverings:
 ```
 
 We see that there is exactly one covering, namely rows 0, 3, and 4. If you visually inspect those rows of matrix m, you'll see that indeed, among those rows there is exactly one 1 in every column.
+
+```
+Row 0: [0    0    1    0    1    1    0]
+Row 3: [1    0    0    1    0    0    0]
+Row 4: [0    1    0    0    0    0    1]
+```
 
 Note that the coverings returned by the dancing-links algorithm don't list the rows in ascending order; rather, they are listed in the order in which the algorithm discovered them.
 
@@ -110,12 +117,12 @@ In an exact cover problem, you can think of rows as the possible choices, and th
 Let's say we want to label our sample matrix's rows as `:A` through `:F` instead of 0-5.
 
 ```clojure
-(def m { :A #{:c :e :f}
-         :B #{:a :d :g}
-         :C #{:b :c :f}
-         :D #{:a :d}
-         :E #{:b :g}
-         :F #{:d :e :g} ])
+(def m {:A #{:c :e :f},
+        :B #{:a :d :g},
+        :C #{:b :c :f},
+        :D #{:a :d},
+        :E #{:b :g},
+        :F #{:d :e :g}})
 ```
 
 Now, dancing-links will report the answer in terms of these row labels.
@@ -133,9 +140,9 @@ There are a few keyword arguments that can alter the search in useful ways. Here
 
 * `:optional-columns #{0 4}` - This example would treat columns 0 and 4 as "at most one 1s" constraints. In other words, the final covering will have at most one 1 in column 0 and at most one 1 in column 4.
 
-* `:ignore-columns #{0 4}` - This example would treat columns 0 and 4 as "at most zero 1s" constraints. In other words, dancing-links won't allow selecting any row that has a 1 in those columns. Another way of thinking about it is that it's like deleting those columns and any row which has a 1 in those columns.
+* `:forbid-columns #{0 4}` - This example would treat columns 0 and 4 as "at most zero 1s" constraints. In other words, dancing-links won't allow selecting any row that has a 1 in those columns. Another way of thinking about it is that it's like deleting those columns and any row which has a 1 in those columns.
 
-* `:select-rows #{:A :D}` - This example would begin the search process by selecting rows `:A` and `:D`. So `:A` and `:D` will be in every single solution.
+* `:select-rows #{:A :D}` - This example would begin the search process by selecting rows `:A` and `:D`. So `:A` and `:D` will be in every single solution. (If you :select-rows with 1s in columns that have been forbidden by :forbid-columns, :select-rows will take precedence).
 
 * `:shuffle true` - This flag causes the dancing-links algorithm to shuffle the matrix rows and columns before searching, which has the effect of causing the algorithm to choose randomly among equally promising alternatives at each stage of the search. Thus, it will discover solutions in a random order.
 
@@ -188,7 +195,7 @@ Each column represents a constraint. We'll use the column label `[i j]` for the 
 The row-labeled sparse matrix representation lets us express these rules in just a few lines of code. We simply build a map that associates each cell-digit placement with the constraints it satisfies.
 
 ```clojure
-;; The rules of suduko
+;; The rules of sudoku
 (def sudoku-constraints
   (into {} (for [i (range 9), j (range 9), n (range 1 10)]
              [[[i j] n]
@@ -197,7 +204,7 @@ The row-labeled sparse matrix representation lets us express these rules in just
 
 Amazing! This is all we need to use tarantella to solve sudoku puzzles, along with a list of initial cell/digit assignments (this list will be our `:select-rows` optional argument, which will cause dancing-links to kick off the search by selecting the rows of the sudoku-constraints matrix associated with those cell/digit assignments).
 
-We want to be able to have a convenient way of entering our sudoku puzzles into Clojure, so we make a quickie converter function to take a vector-of-vectors representation of a partially filled board and return the initial cell/digit assignments.
+We want to be able to have a convenient way of entering our sudoku puzzles into Clojure, so we make a quick converter function to take a vector-of-vectors representation of a partially filled board and return the initial cell/digit assignments.
 
 ```clojure
 (defn board->filled-cells [board]
@@ -392,7 +399,7 @@ Most randomly generated Sudoku puzzles have no decisions to be made, and no dead
   [- 6 - - - - - - -]
   [- - 4 - - 2 8 - -]
   [2 - - 5 - 3 - - -]])
-  
+
 => (map measure-hardness *1)
 ({:nodes 137, :decision-nodes 7, :dead-ends 7}
  {:nodes 73, :decision-nodes 2, :dead-ends 2}

@@ -44,13 +44,12 @@
     (let [m (random-matrix 30 10 0.2)
           output1 (t/dancing-links m :limit 1000
                                    :select-rows #{0}
-                                   :ignore-columns #{9}
+                                   :forbid-columns #{9}
                                    :optional-columns #{3 7})
-          output2 (t/dancing-links m :lazy true
-                                   :limit 1000
-                                   :select-rows #{0}
-                                   :ignore-columns #{9}
-                                   :optional-columns #{3 7})]
+          output2 (take 1000 (t/dancing-links m :lazy true
+                                              :select-rows #{0}
+                                              :forbid-columns #{9}
+                                              :optional-columns #{3 7}))]
       (is (= output1 output2)))))
 
 (deftest classic-test-case
@@ -93,7 +92,7 @@
                          [0    0    0    1    1    0    1]]
                         :optional-columns #{1}))))))
 
-(deftest ignore-columns
+(deftest forbid-columns
   (is (= (set (map set [[0 1]]))
          (set (map set (t/dancing-links 
                         [[0    0    1    0    1    1    0]
@@ -102,7 +101,7 @@
                          [1    0    0    1    0    0    0]
                          [0    1    0    0    0    0    1]
                          [0    0    0    1    1    0    1]]
-                        :ignore-columns #{1}))))))
+                        :forbid-columns #{1}))))))
 
 (deftest example-with-names
   (is (= (set (map set [[:Alice :Charles] [:Bob :David]]))
